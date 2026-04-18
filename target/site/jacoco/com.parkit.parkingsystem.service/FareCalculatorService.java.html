@@ -14,17 +14,22 @@ import com.parkit.parkingsystem.model.Ticket;
 <span class="fc" id="L14">        double outHour = ticket.getOutTime().getTime();</span>
 <span class="fc" id="L15">        double duration = (outHour - inHour) / (60 * 60 * 1000);</span>
 
-<span class="pc bpc" id="L17" title="1 of 3 branches missed.">        switch (ticket.getParkingSpot().getParkingType()){</span>
-            case CAR: {
-<span class="fc" id="L19">                ticket.setPrice(duration * Fare.CAR_RATE_PER_HOUR);</span>
-<span class="fc" id="L20">                break;</span>
-            }
-            case BIKE: {
-<span class="fc" id="L23">                ticket.setPrice(duration * Fare.BIKE_RATE_PER_HOUR);</span>
-<span class="fc" id="L24">                break;</span>
-            }
-<span class="nc" id="L26">            default: throw new IllegalArgumentException(&quot;Unkown Parking Type&quot;);</span>
+<span class="fc bfc" id="L17" title="All 2 branches covered.">        if (duration &lt; 0.5){</span>
+<span class="fc" id="L18">            ticket.setPrice(0);</span>
         }
-<span class="fc" id="L28">    }</span>
+        else {
+<span class="pc bpc" id="L21" title="1 of 3 branches missed.">            switch (ticket.getParkingSpot().getParkingType()){</span>
+                case CAR: {
+<span class="fc" id="L23">                    ticket.setPrice(duration * Fare.CAR_RATE_PER_HOUR);</span>
+<span class="fc" id="L24">                    break;</span>
+                }
+                case BIKE: {
+<span class="fc" id="L27">                    ticket.setPrice(duration * Fare.BIKE_RATE_PER_HOUR);</span>
+<span class="fc" id="L28">                    break;</span>
+                }
+<span class="nc" id="L30">                default: throw new IllegalArgumentException(&quot;Unkown Parking Type&quot;);</span>
+            }
+        }
+<span class="fc" id="L33">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
