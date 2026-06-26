@@ -48,7 +48,7 @@ public class FareCalculatorService {
      * Specific function to round prices
      * 3 digits to pass tests
      */
-    private static double roundedPrice(double price){
+    public static double roundedPrice(double price){
         BigDecimal bd = BigDecimal.valueOf(price).setScale(3, RoundingMode.HALF_UP);
         return bd.doubleValue();
     }

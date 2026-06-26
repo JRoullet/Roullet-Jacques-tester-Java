@@ -5,7 +5,6 @@ import com.parkit.parkingsystem.constants.ParkingType;
 import com.parkit.parkingsystem.model.ParkingSpot;
 import com.parkit.parkingsystem.model.Ticket;
 import com.parkit.parkingsystem.service.FareCalculatorService;
-import org.assertj.core.data.Percentage;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -13,20 +12,18 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Date;
+
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.Date;
 
 //TODO tests d'intégration à faire via un conteneur docker (pour la BDD)
 
 public class FareCalculatorServiceTest {
 
     private static final Logger log = LoggerFactory.getLogger(FareCalculatorServiceTest.class);
-    private static final double DISCOUNT = 0.95;
+    private static final double DISCOUNT = 0.95d;
     private static FareCalculatorService fareCalculatorService;
     private Ticket ticket;
     private ParkingSpot parkingSpot;
@@ -57,6 +54,19 @@ public class FareCalculatorServiceTest {
         assertThat(ticket.getPrice()).isEqualTo(Fare.CAR_RATE_PER_HOUR);
     }
 
+    @DisplayName("ETANT DONNE le retour d'un prix calculé, QUAND on effectu l'arrondi, ALORS le prix retourné est arrondi à 3 décimales")
+    @Test
+    public void calculatePriceReturnsRoundedPrice(){
+
+        double actual = 0.5096d;
+        double expected = 0.510d;
+        double notExpected = 0.509d;
+
+        assertThat(FareCalculatorService.roundedPrice(actual)).isEqualTo(FareCalculatorService.roundedPrice(expected));
+        assertThat(FareCalculatorService.roundedPrice(actual)).isEqualTo(expected);
+        assertThat(FareCalculatorService.roundedPrice(actual)).isNotEqualTo(notExpected);
+    }
+
     @DisplayName("ETANT DONNE une voiture déjà venue, QUAND on calcule le tarif pour une heure de voiture, ALORS le prix est celui de 95% d'une heure de voiture")
     @Test
     public void calculateFareCarWithDiscount(){
@@ -65,13 +75,10 @@ public class FareCalculatorServiceTest {
 
         fareCalculatorService.calculateFare(ticket, true);
 
-        double expected = BigDecimal.valueOf(Fare.CAR_RATE_PER_HOUR)
-                .multiply(BigDecimal.valueOf(DISCOUNT))
-                .setScale(3, RoundingMode.HALF_UP)
-                .doubleValue();
-
-        assertThat(ticket.getPrice()).isEqualTo(expected);
+        double expected = Fare.CAR_RATE_PER_HOUR * DISCOUNT;
+        assertThat(ticket.getPrice()).isEqualTo(FareCalculatorService.roundedPrice(expected));
     }
+
 
     @DisplayName("ETANT DONNE une moto déjà venue, QUAND on calcule le tarif pour une heure de moto, ALORS le prix est celui de 95% d'une heure de moto")
     @Test
@@ -83,6 +90,23 @@ public class FareCalculatorServiceTest {
         fareCalculatorService.calculateFare(ticket, true);
         assertThat(ticket.getPrice()).isEqualTo(Fare.BIKE_RATE_PER_HOUR * DISCOUNT);
     }
+
+
+    //TODO tester si l'utilisateur entrant est un habitué
+
+    @DisplayName("ETANT DONNE une voiture déjà venue, QUAND on calcule le tarif pour une heure de voiture, ALORS le prix est celui de 95% d'une heure de voiture")
+    @Test
+    public void calculateFareCarWithoutDiscount(){
+
+        ticket.setVehicleRegNumber("123-CAR");
+        fareCalculatorService.calculateFare(ticket, false);
+
+        double expected = Fare.CAR_RATE_PER_HOUR;
+        assertThat(ticket.getPrice()).isEqualTo(FareCalculatorService.roundedPrice(expected));
+    }
+
+
+
 
     @DisplayName("ETANT DONNE une moto garée 1h, QUAND on calcule le tarif, ALORS le prix est celui d'une heure moto")
     @Test
