@@ -7,6 +7,7 @@ import com.parkit.parkingsystem.integration.service.DataBasePrepareService;
 import com.parkit.parkingsystem.model.Ticket;
 import com.parkit.parkingsystem.service.ParkingService;
 import com.parkit.parkingsystem.util.InputReaderUtil;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -73,25 +74,15 @@ public class ParkingDataBaseIT {
 
     }
 
-    private static Date rewindDate(int nbdays) {
-        return new Date(System.currentTimeMillis() - (long) nbdays * 24 * 60 * 60 * 1000);
-    }
-
     @Test
     public void testParkingLotExit() {
         ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
         parkingService.processIncomingVehicle();
 
-        Ticket ticketBeforeExit = ticketDAO.getTicket("ABCDEF");
-        ticketBeforeExit.setInTime(rewindDate(1));
-        ticketDAO.updateInTime(ticketBeforeExit);
-        assertNotNull(ticketBeforeExit);
-        try{
-            when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn("ABCDEF");
-        }
-        catch (Exception e){
+        Ticket ticketBeforeExit = rewindTicketInTime(ticketDAO.getTicket("ABCDEF"), 5);
 
-        }
+        assertNotNull(ticketBeforeExit);
+
         parkingService.processExitingVehicle();
 
         // Instead of applying DataBase changes with an embedded SQL request, I added a method to retrieve the ticket
@@ -100,8 +91,41 @@ public class ParkingDataBaseIT {
         // This method could be used for future implementations
 
         Ticket closedTicket = ticketDAO.getTicketById(ticketBeforeExit.getId());
+
         assertNotNull(closedTicket);
         assertNotNull(closedTicket.getOutTime());
         assertTrue(closedTicket.getPrice() >= 0);
+    }
+
+    @Test
+    public void testParkingLotExitRecurringUser() {
+        ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
+
+        // 1er passage
+        parkingService.processIncomingVehicle();
+        rewindTicketInTime(ticketDAO.getTicket("ABCDEF"), 5);
+        parkingService.processExitingVehicle();
+
+        // 2e passage
+        parkingService.processIncomingVehicle();
+        Ticket secondTicket = ticketDAO.getTicket("ABCDEF");
+        rewindTicketInTime(secondTicket, 2);
+        parkingService.processExitingVehicle();
+
+        Ticket closedTicket = ticketDAO.getTicketById(secondTicket.getId());
+
+        assertNotNull(closedTicket);
+        Assertions.assertThat(closedTicket.getPrice()).isEqualTo(2.85);
+    }
+
+
+    private static Date rewindHours(int nbHeures) {
+        return new Date(System.currentTimeMillis() - (long) nbHeures * 60 * 60 * 1000);
+    }
+
+    private Ticket rewindTicketInTime(Ticket ticket, int nbHeures){
+        ticket.setInTime(rewindHours(nbHeures));
+        ticketDAO.updateInTime(ticket);
+        return ticket;
     }
 }
