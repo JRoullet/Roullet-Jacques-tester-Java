@@ -36,7 +36,6 @@ public class ParkingServiceTest {
     @BeforeEach
     public void setUpPerTest() {
         try {
-
             ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR,false);
             ticket = new Ticket();
             ticket.setInTime(new Date(System.currentTimeMillis() - (60*60*1000)));
@@ -141,7 +140,6 @@ public class ParkingServiceTest {
 
         assertNull(parkingSpot);
         verify(parkingSpotDAO,Mockito.never()).getNextAvailableSlot(any(ParkingType.class));
-
     }
 
 

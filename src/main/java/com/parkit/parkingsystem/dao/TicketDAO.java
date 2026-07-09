@@ -15,7 +15,7 @@ import java.sql.Timestamp;
 
 public class TicketDAO {
 
-    private static final Logger logger = LogManager.getLogger("TicketDAO");
+    static final Logger logger = LogManager.getLogger("TicketDAO");
 
     public DataBaseConfig dataBaseConfig = new DataBaseConfig();
 
@@ -45,7 +45,7 @@ public class TicketDAO {
         Ticket ticket = null;
         try {
             con = dataBaseConfig.getConnection();
-            PreparedStatement ps = con.prepareStatement(DBConstants.GET_TICKET);
+            PreparedStatement ps = con.prepareStatement(DBConstants.GET_TICKET_BY_REG_NUMBER);
             //ID, PARKING_NUMBER, VEHICLE_REG_NUMBER, PRICE, IN_TIME, OUT_TIME)
             ps.setString(1, vehicleRegNumber);
             ResultSet rs = ps.executeQuery();
@@ -108,5 +108,32 @@ public class TicketDAO {
             dataBaseConfig.closeConnection(con);
         }
         return count;
+    }
+
+    public Ticket getTicketById(int id) {
+        Connection con = null;
+        Ticket ticket = null;
+        try {
+            con = dataBaseConfig.getConnection();
+            PreparedStatement ps = con.prepareStatement(DBConstants.GET_TICKET_BY_ID);
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                ticket = new Ticket();
+                ParkingSpot parkingSpot = new ParkingSpot(rs.getInt(1), ParkingType.valueOf(rs.getString(6)), false);
+                ticket.setParkingSpot(parkingSpot);
+                ticket.setId(rs.getInt(2));
+                ticket.setPrice(rs.getDouble(3));
+                ticket.setInTime(rs.getTimestamp(4));
+                ticket.setOutTime(rs.getTimestamp(5));
+            }
+            dataBaseConfig.closeResultSet(rs);
+            dataBaseConfig.closePreparedStatement(ps);
+        } catch (Exception ex) {
+            logger.error("Error fetching ticket by id", ex);
+        } finally {
+            dataBaseConfig.closeConnection(con);
+            return ticket;
+        }
     }
 }
