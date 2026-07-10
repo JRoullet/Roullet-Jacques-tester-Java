@@ -15,6 +15,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.Date;
 
@@ -23,10 +26,20 @@ import static junit.framework.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.mockito.Mockito.when;
 
+@Testcontainers
 @ExtendWith(MockitoExtension.class)
 public class ParkingDataBaseIT {
 
-    private static DataBaseTestConfig dataBaseTestConfig = new DataBaseTestConfig();
+    //Instance du conteneur qui se lance et son setup
+    @Container
+    private static final MySQLContainer<?> mysqlContainer = new MySQLContainer<>("mysql:8.0")
+            .withDatabaseName("test")
+            .withUsername("root")
+            .withPassword("rootroot")
+            .withInitScript("Data.sql");
+
+
+    private static DataBaseTestConfig dataBaseTestConfig;
     private static ParkingSpotDAO parkingSpotDAO;
     private static TicketDAOTest ticketDAO;
     private static DataBasePrepareService dataBasePrepareService;
@@ -36,6 +49,13 @@ public class ParkingDataBaseIT {
 
     @BeforeAll
     public static void setUp() {
+        // Se réfère à mon instance de conteneur docker, c'est lui qui pointe sur le conteneur qui vient de demarrer
+        // sinon la classe de config ne saurait pas sur quel port ecouter
+        dataBaseTestConfig = new DataBaseTestConfig(
+                mysqlContainer.getJdbcUrl(),
+                mysqlContainer.getUsername(),
+                mysqlContainer.getPassword()
+        );
         parkingSpotDAO = new ParkingSpotDAO();
         parkingSpotDAO.dataBaseConfig = dataBaseTestConfig;
         ticketDAO = new TicketDAOTest();

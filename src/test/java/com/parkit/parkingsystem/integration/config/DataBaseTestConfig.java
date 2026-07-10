@@ -10,11 +10,31 @@ public class DataBaseTestConfig extends DataBaseConfig {
 
     private static final Logger logger = LogManager.getLogger("DataBaseTestConfig");
 
+    private final String url;
+    private final String username;
+    private final String password;
+
+    // Constructeur par défaut qui marche avec la configuration initiale, en local par défault
+    public DataBaseTestConfig() {
+        this.url = "jdbc:mysql://localhost:3306/prod?serverTimezone=Europe/Paris";
+        this.username = "root";
+        this.password = "rootroot";
+    }
+
+    //Constructeur pour le dockerTestContainer
+    // On declare mais on ne sait pas ou se trouve le conteneur
+    // (c'est testContainers qui va le générer aléatoirement à chaque lancement
+    // Donc il faudra refaire le lien ensuite côté classe de test
+    public DataBaseTestConfig(String url, String username, String password){
+        this.url = url;
+        this.username = username;
+        this.password = password;
+    }
+
+
     public Connection getConnection() throws ClassNotFoundException, SQLException {
-        logger.info("Create DB connection");
         Class.forName("com.mysql.cj.jdbc.Driver");
-        return DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/prod?serverTimezone=Europe/Paris","root","rootroot");
+        return DriverManager.getConnection(url, username, password);
     }
 
     public void closeConnection(Connection con){
@@ -27,7 +47,6 @@ public class DataBaseTestConfig extends DataBaseConfig {
             }
         }
     }
-
     public void closePreparedStatement(PreparedStatement ps) {
         if(ps!=null){
             try {
